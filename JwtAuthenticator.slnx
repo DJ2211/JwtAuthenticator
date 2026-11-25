@@ -1,0 +1,5 @@
+<Solution>
+  <Project Path="JwtAuthenticator.McpServer/JwtAuthenticator.McpServer.csproj" />
+  <Project Path="JwtAuthenticator.Tests/JwtAuthenticator.Tests.csproj" />
+  <Project Path="JwtAuthenticator/JwtAuthenticator.csproj" />
+</Solution>
