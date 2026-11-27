@@ -1,5 +1,7 @@
 ﻿using FluentValidation;
 using JwtAuthenticator.DTOs.Requests;
+using JwtAuthenticator.Options;
+using Microsoft.Extensions.Options;
 
 namespace JwtAuthenticator.Validators;
 
@@ -40,9 +42,9 @@ public class LoginRequestValidator : AbstractValidator<LoginRequest>
 
 public class RefreshTokenRequestValidator : AbstractValidator<RefreshTokenRequest>
 {
-    public RefreshTokenRequestValidator()
+    public RefreshTokenRequestValidator(IOptions<JwtOptions> jwtOptions)
     {
-        RuleFor(x => x.RefreshToken).NotEmpty().WithMessage("Refresh token is required.");
+        RuleFor(x => x.RefreshToken).NotEmpty().When(_ => !jwtOptions.Value.UseHttpOnlyRefreshCookie).WithMessage("Refresh token is required.");
     }
 }
 
@@ -67,5 +69,21 @@ public class ResetPasswordRequestValidator : AbstractValidator<ResetPasswordRequ
             .Matches("[a-z]").WithMessage("Password must contain at least one lowercase letter.")
             .Matches("[0-9]").WithMessage("Password must contain at least one digit.")
             .Matches("[^a-zA-Z0-9]").WithMessage("Password must contain at least one special character.");
+    }
+}
+
+public class TwoFactorCodeRequestValidator : AbstractValidator<TwoFactorCodeRequest>
+{
+    public TwoFactorCodeRequestValidator()
+    {
+        RuleFor(x => x.Code).NotEmpty().WithMessage("Verification code is required.");
+    }
+}
+
+public class ExternalExchangeRequestValidator : AbstractValidator<ExternalExchangeRequest>
+{
+    public ExternalExchangeRequestValidator()
+    {
+        RuleFor(x => x.Code).NotEmpty().WithMessage("Exchange code is required.");
     }
 }

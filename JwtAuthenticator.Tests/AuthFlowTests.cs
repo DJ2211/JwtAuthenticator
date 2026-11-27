@@ -93,4 +93,58 @@ public class AuthFlowTests : IClassFixture<AuthTestFactory>
         var adminResp = await _client.GetAsync("/api/admin/users");
         Assert.Equal(HttpStatusCode.OK, adminResp.StatusCode);
     }
+
+    [Fact]
+    public async Task CookieMode_LoginAndRefresh_SetsHttpOnlyCookieAndHidesJsonToken()
+    {
+        // Spin up a Cookie-mode client from the existing factory
+        using var cookieFactory = new AuthTestFactory().WithWebHostBuilder(builder =>
+        {
+            builder.UseSetting("JwtSettings:UseHttpOnlyRefreshCookie", "true");
+        });
+
+        var client = cookieFactory.CreateClient();
+        var email = $"cookie_{Guid.NewGuid():N}@example.com";
+        const string password = "Strong@Password123!";
+
+        await client.PostAsJsonAsync("/api/auth/register", new RegisterRequest("Cookie", "Tester", email, password));
+
+        // 1. Login -> RefreshToken in JSON must be null, Set-Cookie must contain HttpOnly
+        var loginResp = await client.PostAsJsonAsync("/api/auth/login", new LoginRequest(email, password));
+        Assert.Equal(HttpStatusCode.OK, loginResp.StatusCode);
+
+        var auth = await loginResp.Content.ReadFromJsonAsync<AuthResponse>();
+        Assert.NotNull(auth);
+        Assert.Null(auth.RefreshToken);
+
+        Assert.True(loginResp.Headers.TryGetValues("Set-Cookie", out var setCookies));
+        var cookieHeader = setCookies.First();
+        Assert.Contains("refreshToken=", cookieHeader);
+        Assert.Contains("httponly", cookieHeader, StringComparison.OrdinalIgnoreCase);
+
+        // 2. Call /refresh-token with NO body (HttpClient automatically sends the Cookie!)
+        var refreshResp = await client.PostAsync("/api/auth/refresh-token", content: null);
+        Assert.Equal(HttpStatusCode.OK, refreshResp.StatusCode);
+
+        var refreshed = await refreshResp.Content.ReadFromJsonAsync<AuthResponse>();
+        Assert.NotNull(refreshed);
+        Assert.Null(refreshed.RefreshToken);
+        Assert.False(string.IsNullOrWhiteSpace(refreshed.AccessToken));
+    }
+
+    [Fact]
+    public async Task ExternalAuth_SecurityGuardrails_RejectBadRequests()
+    {
+        // 1. Unsupported provider -> 400
+        var badProvider = await _client.GetAsync("/api/auth/external-login/unknown?returnUrl=http://localhost:5173/callback");
+        Assert.Equal(HttpStatusCode.BadRequest, badProvider.StatusCode);
+
+        // 2. Unconfigured Google (no ClientId in appsettings) -> 400
+        var unconfigured = await _client.GetAsync("/api/auth/external-login/google?returnUrl=http://localhost:5173/callback");
+        Assert.Equal(HttpStatusCode.BadRequest, unconfigured.StatusCode);
+
+        // 3. Invalid one-time exchange code -> 401
+        var badCode = await _client.PostAsJsonAsync("/api/auth/external-exchange", new ExternalExchangeRequest("fake-code"));
+        Assert.Equal(HttpStatusCode.Unauthorized, badCode.StatusCode);
+    }
 }

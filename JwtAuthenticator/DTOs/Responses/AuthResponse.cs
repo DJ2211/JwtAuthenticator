@@ -2,7 +2,7 @@
 {
     public record AuthResponse(
         string AccessToken,
-        string RefreshToken,
+        string? RefreshToken,
         DateTime ExpiresAtUtc,
         string UserId,
         string Email,

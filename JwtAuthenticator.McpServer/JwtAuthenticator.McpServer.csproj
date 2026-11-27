@@ -1,15 +1,42 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <OutputType>Exe</OutputType>
-    <TargetFramework>net10.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
-  </PropertyGroup>
+	<PropertyGroup>
+		<OutputType>Exe</OutputType>
+		<TargetFramework>net10.0</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
 
-  <ItemGroup>
-    <PackageReference Include="Microsoft.Extensions.Hosting" Version="11.0.0" />
-    <PackageReference Include="ModelContextProtocol" Version="2.4.0" />
-  </ItemGroup>
+		<!-- Global .NET Tool Configuration -->
+		<PackAsTool>true</PackAsTool>
+		<ToolCommandName>jwt-auth-mcp</ToolCommandName>
+		<PackageId>JwtAuthenticator.McpServer</PackageId>
+		<Version>2.0.0</Version>
+		<Authors>Jay Dholakia</Authors>
+		<Description>MCP Server for the .NET 10 JwtAuthenticator Starter Kit. Scaffolds production-ready JWT auth APIs, configures email/OAuth providers, generates frontend clients, and audits security configs.</Description>
+		<PackageTags>mcp;dotnet;jwt;oauth2;authentication;starter;ai</PackageTags>
+		<PackageLicenseExpression>MIT</PackageLicenseExpression>
+		<PackageReadmeFile>README.md</PackageReadmeFile>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Microsoft.Extensions.Hosting" Version="11.0.0" />
+		<PackageReference Include="ModelContextProtocol" Version="2.4.0" />
+	</ItemGroup>
+
+	<!-- Bundle the JwtAuthenticator starter template inside the tool package -->
+	<ItemGroup>
+		<Content Include="..\JwtAuthenticator\**\*"
+				 Exclude="..\JwtAuthenticator\bin\**;..\JwtAuthenticator\obj\**;..\JwtAuthenticator\**\*.db*;..\JwtAuthenticator\**\*.user;..\JwtAuthenticator\appsettings.Development.json">
+			<Link>Templates\JwtAuthenticator\%(RecursiveDir)%(Filename)%(Extension)</Link>
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+			<Pack>false</Pack>
+		</Content>
+		<Content Include="..\docker-compose.yml">
+			<Link>Templates\docker-compose.yml</Link>
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+			<Pack>false</Pack>
+		</Content>
+		<None Include="..\README.md" Pack="true" PackagePath="\" />
+	</ItemGroup>
 
 </Project>

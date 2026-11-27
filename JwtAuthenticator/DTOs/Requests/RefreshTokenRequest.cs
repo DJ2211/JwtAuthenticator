@@ -2,5 +2,5 @@
 
 public record RefreshTokenRequest
 (
-    string RefreshToken
+    string? RefreshToken = null
 );

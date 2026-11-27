@@ -65,7 +65,7 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
 .AddDefaultTokenProviders();
 
 // 4. JWT Bearer Authentication
-builder.Services.AddAuthentication(options =>
+var authBuilder = builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
     options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -85,6 +85,34 @@ builder.Services.AddAuthentication(options =>
         ClockSkew = TimeSpan.Zero
     };
 });
+
+// Conditionally enable Google OAuth if configured
+var googleClientId = builder.Configuration["Authentication:Google:ClientId"];
+var googleClientSecret = builder.Configuration["Authentication:Google:ClientSecret"];
+if (!string.IsNullOrWhiteSpace(googleClientId) && !string.IsNullOrWhiteSpace(googleClientSecret)) 
+{
+    authBuilder.AddGoogle(options =>
+    {
+        options.SignInScheme = IdentityConstants.ExternalScheme;
+        options.ClientId = googleClientId;
+        options.ClientSecret = googleClientSecret;
+    });
+}
+
+// Conditionally enable Github OAuth if Configured
+var githubClientId = builder.Configuration["Authentication:Github:ClientId"];
+var githubClientSecret = builder.Configuration["Authentication:Github:ClientSecret"];
+if(!string.IsNullOrWhiteSpace(githubClientId) && !string.IsNullOrWhiteSpace(githubClientSecret))
+{
+    authBuilder.AddGitHub(options =>
+    {
+        options.SignInScheme = IdentityConstants.ExternalScheme;
+        options.ClientId = githubClientId;
+        options.ClientSecret = githubClientSecret;
+        options.Scope.Add("user:email"); // Ensures private GitHub emails are still returned
+    });
+}
+
 
 // 5. Frontend-Ready CORS Policy
 var allowedOrigins = builder.Configuration.GetSection("CorsSettings:AllowedOrigins").Get<string[]>() ?? [];
@@ -129,6 +157,7 @@ builder.Services.AddRateLimiter(options =>
 // 7. Global Exception Handling & Health Checks
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddProblemDetails();
+builder.Services.AddMemoryCache();
 builder.Services.AddHealthChecks().AddCheck<DatabaseHealthCheck>("database");
 
 // 8. Application Services & FluentValidation
