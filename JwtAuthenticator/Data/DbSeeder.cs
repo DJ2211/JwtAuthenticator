@@ -1,6 +1,7 @@
 ﻿using JwtAuthenticator.Constants;
 using JwtAuthenticator.Entities;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 
 namespace JwtAuthenticator.Data;
 
@@ -12,6 +13,13 @@ public static class DbSeeder
         var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
         var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
         var configuration = scope.ServiceProvider.GetRequiredService<IConfiguration>();
+
+        var env = scope.ServiceProvider.GetRequiredService<IHostEnvironment>();
+        var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        if(!env.IsEnvironment("Testing") && (await dbContext.Database.GetPendingMigrationsAsync()).Any())
+        {
+            await dbContext.Database.MigrateAsync();
+        }
 
         // 1. Seed Roles
         String[] roles = [Roles.Admin, Roles.User];

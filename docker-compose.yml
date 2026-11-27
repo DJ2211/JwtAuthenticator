@@ -1,0 +1,55 @@
+services: 
+ #1. PostgreSQL Database Container (official image from Docker Hub)
+ postgres:
+  image: postgres:17-alpine
+  container_name: jwtauth-postgres
+  environment:
+    POSTGRES_USER: postgres
+    POSTGRES_PASSWORD: local_dev_password
+    POSTGRES_DB: JwtAuthDb
+  ports:
+  - "5432:5432"
+  volumes:
+  - postgres_data:/var/lib/postgresql/data
+  healthcheck:
+    test: ["CMD-SHELL", "pg_isready -U postgres"]
+    interval: 5s
+    timeout: 5s
+    retries: 5
+
+#2. Mailpit (Local Fake Email Server + Web Inbox UI)
+ mailpit:
+  image: axllent/mailpit:latest
+  container_name: jwtauth-mailpit
+  ports:
+  - "1025:1025"
+  - "8025:8025"
+
+#3. .Net 10 API Container (built from the local Dockerfile)
+ api:
+  build:
+    context: ./JwtAuthenticator
+    dockerfile: Dockerfile
+  container_name: jwtauth-api
+  ports:
+  - "8080:8080"
+  environment:
+    ASPNETCORE_ENVIRONMENT: Development
+    DatabaseProvider: sqlite
+    ConnectionStrings__Sqlite: "Data Source=/app/data/jwtauthenticator.db"
+    JwtSettings__SecretKey: "docker_local_dev_secret_key_change_in_production_32chars!"
+    EmailSettings__Provider: smtp
+    EmailSettings__SmtpHost: mailpit
+    EmailSettings__SmtpPort: 1025
+  volumes:
+  - sqlite_data:/app/data
+  depends_on:
+    postgres:
+      condition: service_healthy
+    mailpit:
+      condition: service_started
+
+volumes:
+  postgres_data:
+  sqlite_data:
+    

@@ -1,4 +1,12 @@
 <Solution>
+  <Folder Name="/.github/" />
+  <Folder Name="/.github/workflows/">
+    <File Path="ci.yml" />
+  </Folder>
+  <Folder Name="/Solution Items/">
+    <File Path="docker-compose.yml" />
+    <File Path="Readme.md" />
+  </Folder>
   <Project Path="JwtAuthenticator.McpServer/JwtAuthenticator.McpServer.csproj" />
   <Project Path="JwtAuthenticator.Tests/JwtAuthenticator.Tests.csproj" />
   <Project Path="JwtAuthenticator/JwtAuthenticator.csproj" />

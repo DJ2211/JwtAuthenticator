@@ -130,12 +130,7 @@ namespace JwtAuthenticator.McpServer.Tools
                 _ => string.Empty
             };
 
-            if (string.IsNullOrEmpty(code))
-            {
-                return "ERROR: Unsupported framework. Choose one of: react-axios, nextjs-fetch, angular.";
-            }
-
-            if (!string.IsNullOrWhiteSpace(code))
+            if (string.IsNullOrWhiteSpace(code))
             {
                 return "ERROR: Unsupported framework. Choose one of: react-axios, nextjs-fetch, angular.";
             }
